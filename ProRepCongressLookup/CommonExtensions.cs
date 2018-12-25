@@ -80,11 +80,11 @@ class JsonPropertyListByTypeAttribute : Attribute
     }
 }
 
-class JsonPropertyNameByResultAttribute : Attribute
+class JsonPropertyNameByModelAttribute : Attribute
 {
     public string PropertyName { get; set; }
 
-    public JsonPropertyNameByResultAttribute(string propertyName)
+    public JsonPropertyNameByModelAttribute(string propertyName)
     {
         PropertyName = propertyName;
     }
@@ -217,17 +217,20 @@ public class DynamicPropertyNameConverter : JsonConverter
         JObject JsonObject = JObject.Load(reader);
         foreach (JProperty JsonProperty in JsonObject.Properties())
         {
-            
-            PropertyInfo PropertyInfo = Properties.FirstOrDefault(pi =>
-                pi.CanWrite && pi.GetCustomAttribute<JsonPropertyNameByTypeAttribute>()?.PropertyName == JsonProperty.Name);
+            PropertyInfo PropertyInfo = Properties.FirstOrDefault(propertyInfo =>
+              propertyInfo.CanWrite && propertyInfo.GetCustomAttributes<JsonPropertyNameByTypeAttribute>()?.FirstOrDefault(att => att.PropertyName == JsonProperty.Name)?.PropertyName == JsonProperty.Name);
 
             if (PropertyInfo == null)
-                PropertyInfo = Properties.FirstOrDefault(pi =>
-                pi.CanWrite && pi.GetCustomAttribute<JsonPropertyNameByResultAttribute>()?.PropertyName == JsonProperty.Name);
+                PropertyInfo = Properties.FirstOrDefault(propertyInfo =>
+                propertyInfo.CanWrite && propertyInfo.GetCustomAttribute<JsonPropertyNameByModelAttribute>()?.PropertyName == JsonProperty.Name);
 
             if (PropertyInfo == null)
-                PropertyInfo = Properties.FirstOrDefault(pi =>
-                pi.CanWrite && pi.GetCustomAttribute<JsonPropertyNameByBaseAttribute>()?.PropertyName == JsonProperty.Name);
+                PropertyInfo = Properties.FirstOrDefault(propertyInfo =>
+                propertyInfo.CanWrite && propertyInfo.GetCustomAttribute<JsonPropertyNameByBaseAttribute>()?.PropertyName == JsonProperty.Name);
+
+            if (PropertyInfo == null)
+                PropertyInfo = Properties.FirstOrDefault(propertyInfo => 
+                propertyInfo.Name == JsonProperty.Name);
 
             PropertyInfo?.SetValue(Instance, JsonProperty.Value.ToObject(PropertyInfo.PropertyType, serializer));
         }

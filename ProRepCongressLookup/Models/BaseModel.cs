@@ -6,11 +6,8 @@ namespace ProRepCongressLookup.Models
 {
     public class BaseModel<ModleType>
     {
-        [JsonPropertyNameByBase("status")]
-        public string Status { get; set; }
-        [JsonPropertyNameByBase("copyright")]
-        public string Copyright { get; set; }
-        [JsonPropertyNameByBase("results")]
-        public List<ResultModel<ModleType>> Results { get; set; }
+        public string status { get; set; }
+        public string copyright { get; set; }
+        public List<ResultModel<ModleType>> results { get; set; }
     }
 }

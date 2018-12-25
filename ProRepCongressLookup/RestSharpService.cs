@@ -64,7 +64,7 @@ namespace ProRepCongressLookup
                 using (var jsonTextReader = new JsonTextReader(stringReader))
                 {
                     BaseModel<ModelType> Model = _Serializer.Deserialize<BaseModel<ModelType>>(jsonTextReader);
-                    return Model.Results.First().Models;
+                    return Model.results.First().Models;
                }
             }
         }
