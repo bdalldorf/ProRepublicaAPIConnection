@@ -55,20 +55,6 @@ namespace ProRepCongressLookup
             }
         }
 
-        public List<ModelType> DeserializeList<ModelType>(RestSharp.IRestResponse response)
-        {
-            var Content = response.Content;
-
-            using (var stringReader = new StringReader(Content))
-            {
-                using (var jsonTextReader = new JsonTextReader(stringReader))
-                {
-                    BaseModel<ModelType> Model = _Serializer.Deserialize<BaseModel<ModelType>>(jsonTextReader);
-                    return Model.results.First().Models;
-               }
-            }
-        }
-
         public static RestSharpService Default
         {
             get

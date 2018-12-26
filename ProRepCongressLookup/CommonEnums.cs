@@ -151,7 +151,21 @@ namespace ProRepCongressLookup
         Passed,
         [Description("enacted")]
         Enacted,
-        [Description("Vetoed")]
+        [Description("vetoed")]
         Vetoed
+    }
+
+    public enum APIModelKeyWords
+    {
+        [Description("member_id")]
+        MemberID,
+        [Description("members")]
+        Members,
+        [Description("roles")] 
+        Roles,
+        [Description("committees")]
+        Committees,
+        [Description("subcommittees")]
+        SubCommittees,
     }
 }

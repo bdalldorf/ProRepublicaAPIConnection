@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Linq;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using ProRepCongressLookup.Models;
-using System.Collections.Generic;
-
 #region Attributes
 
 public class TableFieldNameAttribute : Attribute
@@ -53,53 +47,6 @@ public class TableNameAttribute : Attribute
         if (TableName == null) TableName = string.Empty;
     }
 }
-
-[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-class JsonPropertyNameByTypeAttribute : Attribute
-{
-    public string PropertyName { get; set; }
-    public Type ObjectType { get; set; }
-
-    public JsonPropertyNameByTypeAttribute(string propertyName, Type objectType)
-    {
-        PropertyName = propertyName;
-        ObjectType = objectType;
-    }
-}
-
-[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-class JsonPropertyListByTypeAttribute : Attribute
-{
-    public string PropertyName { get; set; }
-    public Type ObjectType { get; set; }
-
-    public JsonPropertyListByTypeAttribute(string propertyName, Type objectType)
-    {
-        PropertyName = propertyName;
-        ObjectType = objectType;
-    }
-}
-
-class JsonPropertyNameByModelAttribute : Attribute
-{
-    public string PropertyName { get; set; }
-
-    public JsonPropertyNameByModelAttribute(string propertyName)
-    {
-        PropertyName = propertyName;
-    }
-}
-
-class JsonPropertyNameByBaseAttribute : Attribute
-{
-    public string PropertyName { get; set; }
-
-    public JsonPropertyNameByBaseAttribute(string propertyName)
-    {
-        PropertyName = propertyName;
-    }
-}
-
 
 #endregion
 
@@ -175,72 +122,3 @@ public static class EnumerationExtension
 }
 
 #endregion
-
-public class DynamicPropertyNameConverter : JsonConverter
-{
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-    {
-        Type Type = value.GetType();
-        JObject JsonObject = new JObject();
-
-        foreach (PropertyInfo propInfo in Type.GetProperties().Where(p => p.CanRead))
-        {
-            string PropertyName = propInfo.Name;
-            object PropertyValue = propInfo.GetValue(value, null);
-            JToken Token = (PropertyValue != null) ? JToken.FromObject(PropertyValue, serializer) : JValue.CreateNull();
-
-            if (PropertyValue != null && propInfo.PropertyType == typeof(object))
-            {
-                JsonPropertyNameByTypeAttribute JsonPropertyName = propInfo.GetCustomAttributes<JsonPropertyNameByTypeAttribute>()
-                    .FirstOrDefault(a => a.ObjectType.IsAssignableFrom(PropertyValue.GetType()));
-
-                if (JsonPropertyName != null)
-                    PropertyName = JsonPropertyName.PropertyName;
-            }
-
-            JsonObject.Add(PropertyName, Token);
-        }
-
-        JsonObject.WriteTo(writer);
-    }
-
-    public override bool CanRead
-    {
-        get { return true; }
-    }
-
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-    {
-        object Instance = Activator.CreateInstance(objectType);
-        var Properties = objectType.GetTypeInfo().DeclaredProperties.ToList();
-
-        JObject JsonObject = JObject.Load(reader);
-        foreach (JProperty JsonProperty in JsonObject.Properties())
-        {
-            PropertyInfo PropertyInfo = Properties.FirstOrDefault(propertyInfo =>
-              propertyInfo.CanWrite && propertyInfo.GetCustomAttributes<JsonPropertyNameByTypeAttribute>()?.FirstOrDefault(att => att.PropertyName == JsonProperty.Name)?.PropertyName == JsonProperty.Name);
-
-            if (PropertyInfo == null)
-                PropertyInfo = Properties.FirstOrDefault(propertyInfo =>
-                propertyInfo.CanWrite && propertyInfo.GetCustomAttribute<JsonPropertyNameByModelAttribute>()?.PropertyName == JsonProperty.Name);
-
-            if (PropertyInfo == null)
-                PropertyInfo = Properties.FirstOrDefault(propertyInfo =>
-                propertyInfo.CanWrite && propertyInfo.GetCustomAttribute<JsonPropertyNameByBaseAttribute>()?.PropertyName == JsonProperty.Name);
-
-            if (PropertyInfo == null)
-                PropertyInfo = Properties.FirstOrDefault(propertyInfo => 
-                propertyInfo.Name == JsonProperty.Name);
-
-            PropertyInfo?.SetValue(Instance, JsonProperty.Value.ToObject(PropertyInfo.PropertyType, serializer));
-        }
-
-        return Instance;
-    }
-
-    public override bool CanConvert(Type objectType)
-    {
-        // CanConvert is not called if a [JsonConverter] attribute is used
-        return false;
-    }
-}

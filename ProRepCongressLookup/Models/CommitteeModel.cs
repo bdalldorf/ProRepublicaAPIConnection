@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ProRepCongressLookup.Models
 {
-    public class CommitteeModel : BaseModel<CommitteeModel>
+    public class CommitteeModel
     {
         public string name { get; set; }
         public string code { get; set; }
